@@ -98,7 +98,7 @@ function RefreshAccount (account, since)
 
       name = currencyNames[currencyName] ~= nil and currencyNames[currencyName] or currencyName
 
-      if prices[currencyName] ~= nil or key == currencyName then
+      if (prices[currencyName] ~= nil or key == currencyName) and tonumber(value) > 0 then
         s[#s+1] = {
           name = name,
           market = market,
