@@ -45,6 +45,7 @@ local customerId
 
 local currencyNames = {
   BTC = "Bitcoin",
+  BCH = "Bitcoin Cash",
   ETH = "Ether",
   LTC = "Litecoin",
   XRP = "Ripple",
@@ -65,6 +66,7 @@ function InitializeSession (protocol, bankCode, username, username2, password, u
 
   prices = {
     BTC = queryPublic("ticker/btceur"),
+    BCH = queryPublic("ticker/bcheur"),
     ETH = queryPublic("ticker/etheur"),
     LTC = queryPublic("ticker/ltceur"),
     XRP = queryPublic("ticker/xrpeur"),
