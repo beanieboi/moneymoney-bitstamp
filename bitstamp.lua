@@ -26,7 +26,7 @@
 -- SOFTWARE.
 
 WebBanking{
-  version = 1.0,
+  version = 1.1,
   url = "https://www.bitstamp.net",
   description = "Fetch balances from Bitstamp API and list them as securities",
   services= { "Bitstamp Account" },
@@ -53,11 +53,11 @@ local currencyNames = {
   USD = "US Dollar"
 }
 
-function SupportsBank (protocol, bankCode)
+function SupportsBank(protocol, bankCode)
   return protocol == ProtocolWebBanking and bankCode == "Bitstamp Account"
 end
 
-function InitializeSession (protocol, bankCode, username, username2, password, username3)
+function InitializeSession(protocol, bankCode, username, username2, password, username3)
   apiKey = username2
   apiSecret = password
   customerId = username
@@ -75,7 +75,7 @@ function InitializeSession (protocol, bankCode, username, username2, password, u
   }
 end
 
-function ListAccounts (knownAccounts)
+function ListAccounts(knownAccounts)
   local account = {
     name = accountName,
     accountNumber = accountNumber,
@@ -83,21 +83,18 @@ function ListAccounts (knownAccounts)
     portfolio = true,
     type = "AccountTypePortfolio"
   }
-
   return {account}
 end
 
-function RefreshAccount (account, since)
+function RefreshAccount(account, since)
   local name
   local currencyName
   local s = {}
 
   for key, value in pairs(balances) do
     if string.match(key, "_balance") then
-
       currencyName, stringBalance = key:match("(.*)_(.*)")
       currencyName = currencyName:upper()
-
       name = currencyNames[currencyName] ~= nil and currencyNames[currencyName] or currencyName
 
       if (prices[currencyName] ~= nil or key == currencyName) and tonumber(value) > 0 then
@@ -115,7 +112,7 @@ function RefreshAccount (account, since)
   return {securities = s}
 end
 
-function EndSession ()
+function EndSession()
 end
 
 function queryPrivate(method, request)
@@ -134,11 +131,10 @@ function queryPrivate(method, request)
 
   local postData = httpBuildQuery(request)
 
-  connection = Connection()
-  content = connection:request("POST", url .. path, postData, "application/x-www-form-urlencoded; charset=UTF-8")
+  local connection = Connection()
+  local content = connection:request("POST", url .. path, postData, "application/x-www-form-urlencoded; charset=UTF-8")
 
-  json = JSON(content)
-
+  local json = JSON(content)
   return json:dictionary()
 end
 
@@ -148,34 +144,45 @@ function queryPublic(method, request)
   end
 
   local path = string.format("/api/%s/%s/", apiVersion, method)
-  local postData = httpBuildQuery(request)
+  local queryString = httpBuildQuery(request)
+  local fullUrl = url .. path
+  if queryString ~= "" then
+    fullUrl = fullUrl .. "?" .. queryString
+  end
 
-  connection = Connection()
-  content = connection:request("POST", url .. path, postData)
-  json = JSON(content)
+  local connection = Connection()
+  local content = connection:request("GET", fullUrl)
+  local json = JSON(content)
 
   return json:dictionary()
 end
 
 function bin2hex(s)
- return (s:gsub(".", function (byte)
-   return string.format("%02x", string.byte(byte))
- end))
+  return (s:gsub(".", function (byte)
+    return string.format("%02x", string.byte(byte))
+  end))
 end
 
 function httpBuildQuery(params)
   local str = ''
   for key, value in pairs(params) do
-    str = str .. key .. "=" .. value .. "&"
+    str = str .. key .. "=" .. tostring(value) .. "&"
   end
-  return str.sub(str, 1, -2)
+  if str == '' then
+    return ''
+  end
+  return str:sub(1, -2)
 end
 
 function invertPrices(prices)
   local newPrices = {}
-  for key,value in pairs(prices) do
-    newPrices[key] = 1 / value
+  for key, value in pairs(prices) do
+    local num = tonumber(value)
+    if num and num ~= 0 then
+      newPrices[key] = 1 / num
+    else
+      newPrices[key] = nil -- oder 0, wenn du lieber 0 möchtest
+    end
   end
-
   return newPrices
 end
